@@ -41,6 +41,15 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+# When run as part of a Composer script, the bin-dir will be pushed to the front of the $PATH.
+#
+# However, this can lead to recursion since the first "shellcheck" script `command -v shellcheck`
+# will find will be...well, this one.
+if [[ -n "$COMPOSER_BIN_DIR" ]]; then
+    # shellcheck disable=SC2001
+    PATH="$(sed -e "s|^${COMPOSER_BIN_DIR}:||" <<< "$PATH")"
+fi
+
 # Find the local ShellCheck binary.
 shellcheck="$(command -v shellcheck)"
 
