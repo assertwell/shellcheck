@@ -20,5 +20,5 @@ jobs:
       - name: Validate composer.json
         run: composer validate
 
-      - name: Check coding standards
+      - name: Run static analysis
         run: composer test
