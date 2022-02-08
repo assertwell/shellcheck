@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#
+# Locate ShellCheck in the current environment and pass it the given arguments.
+#
+# If ShellCheck is not found, provide instructions for how to install it in the given environment.
+#
+# To remain consistent with ShellCheck's exit codes, this script will exit with a code of 2 if
+# ShellCheck cannot be found locally (unless the `--ignore-missing` option is present).
+#
+# Reference: https://github.com/koalaman/shellcheck/wiki/Integration#exit-codes
+#
+# OPTIONS:
+#
+# Note: All options other than those listed below will be passed directly to the ShellCheck binary.
+#
+#   -i, --ignore-missing    Print a warning, but consider the script successful if a local instance
+#                           of ShellCheck could not be found.
+#
+# This script is part of the assertwell/shellcheck package.
+#
+# URL: https://github.com/assertwell/shellcheck
+# Author: Steve Grunwell
+# License: MIT
+
+declare -a args
+
+# Default exit code if ShellCheck cannot be found.
+exit_code=2
+
+# Look for any arguments specific to this script, and put everything else into $args.
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -i|--ignore-missing)
+            exit_code=0
+            shift
+            ;;
+        *)
+            args+=("$1")
+            shift
+            ;;
+    esac
+done
+
+# Find the local ShellCheck binary.
+shellcheck="$(command -v shellcheck)"
+
+# Print installation instructions if ShellCheck was not found.
+if [[ -z "$shellcheck" ]]; then
+    echo -e "\n\033[0;33mShellCheck was not found in your \$PATH!\033[0;0m"
+    echo -e "Please visit \033[4mhttps://github.com/koalaman/shellcheck#installing\033[0m for installation instructions.\n"
+    exit "$exit_code"
+fi
+
+"$shellcheck" "${args[@]}"

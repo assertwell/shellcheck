@@ -1,0 +1,30 @@
+{
+    "name": "assertwell/shellcheck",
+    "description": "Expose ShellCheck as a vendor binary for PHP projects",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Steve Grunwell",
+            "homepage": "https://stevegrunwell.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/assertwell/shellcheck/issues",
+        "source": "https://github.com/assertwell/shellcheck"
+    },
+    "bin": [
+        "bin/shellcheck"
+    ],
+    "scripts": {
+        "test": "shellcheck bin/shellcheck"
+    },
+    "scripts-descriptions": {
+        "test": "Run ShellCheck against the ShellCheck proxy script"
+    },
+    "minimum-stability": "stable",
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true
+    }
+}
