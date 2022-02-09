@@ -13,6 +13,8 @@
 #
 # Note: All options other than those listed below will be passed directly to the ShellCheck binary.
 #
+#       --debug             Print debug messages within this script, useful when troubleshooting
+#                           $PATH issues.
 #   -i, --ignore-missing    Print a warning, but consider the script successful if a local instance
 #                           of ShellCheck could not be found.
 #
@@ -26,10 +28,22 @@ declare -a args
 
 # Default exit code if ShellCheck cannot be found.
 exit_code=2
+debug_mode=0
+
+# Print a debug message if debug_mode=1
+function debug() {
+    if [[ "$debug_mode" == 1 ]]; then
+        printf "\033[0;36m[DEBUG]\033[0;0m %s\n" "$1"
+    fi
+}
 
 # Look for any arguments specific to this script, and put everything else into $args.
 while [ $# -gt 0 ]; do
     case "$1" in
+        --debug)
+            debug_mode=1
+            shift
+            ;;
         -i|--ignore-missing)
             exit_code=0
             shift
@@ -45,9 +59,22 @@ done
 #
 # However, this can lead to recursion since the first "shellcheck" script `command -v shellcheck`
 # will find will be...well, this one.
-if [[ -n "$COMPOSER_BIN_DIR" ]]; then
+#
+# Composer 2.2.6 introduced the COMPOSER_RUNTIME_BIN_DIR environment variable, so we can use that
+# to strip the bin-dir from the user's $PATH.
+#
+# For older versions of Composer, attempt to build the path by reading the Composer configuration
+# (if present).
+if [[ -z "$COMPOSER_RUNTIME_BIN_DIR" ]]; then
+    debug "COMPOSER_RUNTIME_BIN_DIR not found, checking Composer configuration"
+    COMPOSER_RUNTIME_BIN_DIR="$(composer config --absolute bin-dir || 'true')"
+fi
+
+# If we have a value for COMPOSER_RUNTIME_BIN_DIR, strip it from the user's $PATH.
+if [[ -n "$COMPOSER_RUNTIME_BIN_DIR" ]]; then
+    debug "Stripping '${COMPOSER_RUNTIME_BIN_DIR}' from \$PATH"
     # shellcheck disable=SC2001
-    PATH="$(sed -e "s|^${COMPOSER_BIN_DIR}:||" <<< "$PATH")"
+    PATH="$(sed -e "s|^${COMPOSER_RUNTIME_BIN_DIR}:||" <<< "$PATH")"
 fi
 
 # Find the local ShellCheck binary.
@@ -57,7 +84,10 @@ shellcheck="$(command -v shellcheck)"
 if [[ -z "$shellcheck" ]]; then
     echo -e "\n\033[0;33mShellCheck was not found in your \$PATH!\033[0;0m"
     echo -e "Please visit \033[4mhttps://github.com/koalaman/shellcheck#installing\033[0m for installation instructions.\n"
+    debug "PATH: ${PATH}"
     exit "$exit_code"
 fi
 
+debug "Using ${shellcheck}"
+debug "Running \`shellcheck ${args[*]}\`"
 "$shellcheck" "${args[@]}"
